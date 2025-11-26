@@ -7,5 +7,4 @@
 
 # Ignorar el archivo de package-lock.json
 /package-lock.json
-/package.json
 .env
