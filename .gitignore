@@ -1,0 +1,11 @@
+# Ignorar la carpeta de videos  
+/public/*
+/public/videos/
+
+# Ignorar la carpeta de node_modules
+/node_modules
+
+# Ignorar el archivo de package-lock.json
+/package-lock.json
+/package.json
+.env
