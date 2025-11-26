@@ -16,7 +16,7 @@ router.post('/', ensureMultipartField, uploadVideo.single('video'), (req, res) =
             return res.status(400).json({ status: 400, message: 'No video file uploaded' });
         }
 
-        const videoUrl = `${req.protocol}://${req.get('host')}/videos/${video.filename}`;
+        const videoUrl = `${req.protocol}s://${req.get('host')}/videos/${video.filename}`;
         res.status(200).json({ status: 200, message: 'Video uploaded successfully', videoUrl });
            
     } catch (error) {
