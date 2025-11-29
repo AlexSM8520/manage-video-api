@@ -8,6 +8,8 @@ var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var apiRouter = require('./routes/api');
+var cron = require('node-cron');
+var { cleanupOldVideos } = require('./utils/cleanupVideos');
 
 var app = express();
 
@@ -59,6 +61,23 @@ app.use('/api/v1', apiRouter);
 
 // Ruta estática correcta para servir videos desde /videos en la url
 app.use('/videos', express.static(path.join(__dirname, 'public', 'videos')));
+
+// Setup cron job to clean up old videos (runs every hour)
+// Cron pattern: '0 * * * *' means "at minute 0 of every hour"
+cron.schedule('0 * * * *', async () => {
+  console.log('[Cron] Starting scheduled video cleanup...');
+  await cleanupOldVideos();
+}, {
+  scheduled: true,
+  timezone: "America/Mexico_City" // Adjust timezone as needed
+});
+
+// Run cleanup once on startup
+cleanupOldVideos().then(result => {
+  console.log(`[Startup] Initial cleanup completed: ${result.deleted} files deleted, ${result.errors} errors`);
+}).catch(err => {
+  console.error('[Startup] Error during initial cleanup:', err);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
