@@ -2,22 +2,19 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Lazy initialization of Supabase client
 // Only create it when needed to avoid errors if env vars are not set
-let supabase = null;
 
-function getSupabaseClient() {
-  if (!supabase) {
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    console.log(SUPABASE_URL);
-    const SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-    console.log(SUPABASE_ANON_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+console.log('SUPABASE_URL',SUPABASE_URL);
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+console.log('SUPABASE_PUBLISHABLE_KEY',SUPABASE_PUBLISHABLE_KEY);
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error('SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be set in environment variables');
-    }
-
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  return supabase;
+let supabaseClient;
+try {
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  console.log(`✅ Conexión establecida con Supabase (${apiUrl})`);
+} catch (e) {
+  console.error('❌ Error inicializando Supabase Client:', e);
+  process.exit(1);
 }
 
 /**
@@ -27,18 +24,6 @@ function getSupabaseClient() {
  */
 async function validateSupabaseToken(req, res, next) {
   try {
-    // Check if Supabase is configured
-    let supabaseClient;
-    try {
-      supabaseClient = getSupabaseClient();
-    } catch (configError) {
-      return res.status(500).json({
-        status: 500,
-        message: 'Supabase configuration error',
-        error: configError.message
-      });
-    }
-
     // Extract token from Authorization header
     const authHeader = req.headers['authorization'];
     
