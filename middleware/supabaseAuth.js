@@ -1,15 +1,22 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Create Supabase client for token validation
-// Use anon key for user token validation (not service role key)
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+// Lazy initialization of Supabase client
+// Only create it when needed to avoid errors if env vars are not set
+let supabase = null;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('Warning: SUPABASE_URL or SUPABASE_ANON_KEY not set. Supabase auth middleware may not work correctly.');
+function getSupabaseClient() {
+  if (!supabase) {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be set in environment variables');
+    }
+
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return supabase;
 }
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Middleware to validate Supabase JWT tokens
@@ -18,6 +25,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  */
 async function validateSupabaseToken(req, res, next) {
   try {
+    // Check if Supabase is configured
+    let supabaseClient;
+    try {
+      supabaseClient = getSupabaseClient();
+    } catch (configError) {
+      return res.status(500).json({
+        status: 500,
+        message: 'Supabase configuration error',
+        error: configError.message
+      });
+    }
+
     // Extract token from Authorization header
     const authHeader = req.headers['authorization'];
     
@@ -47,7 +66,7 @@ async function validateSupabaseToken(req, res, next) {
     }
 
     // Validate token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({
@@ -80,6 +99,16 @@ async function validateSupabaseToken(req, res, next) {
  */
 async function optionalSupabaseToken(req, res, next) {
   try {
+    // Check if Supabase is configured
+    let supabaseClient;
+    try {
+      supabaseClient = getSupabaseClient();
+    } catch (configError) {
+      // For optional auth, just continue without user if config is missing
+      console.warn('Supabase not configured, skipping optional token validation:', configError.message);
+      return next();
+    }
+
     const authHeader = req.headers['authorization'];
     
     if (!authHeader) {
@@ -98,7 +127,7 @@ async function optionalSupabaseToken(req, res, next) {
     }
 
     // Try to validate token
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
 
     if (!error && user) {
       req.user = user;
