@@ -4,14 +4,12 @@ const { createClient } = require('@supabase/supabase-js');
 // Only create it when needed to avoid errors if env vars are not set
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-console.log('SUPABASE_URL',SUPABASE_URL);
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-console.log('SUPABASE_PUBLISHABLE_KEY',SUPABASE_PUBLISHABLE_KEY);
 
 let supabaseClient;
 try {
   supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  console.log(`✅ Conexión establecida con Supabase (${apiUrl})`);
+  console.log(`✅ Conexión establecida con Supabase (${SUPABASE_URL})`);
 } catch (e) {
   console.error('❌ Error inicializando Supabase Client:', e);
   process.exit(1);
