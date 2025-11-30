@@ -7,7 +7,9 @@ let supabase = null;
 function getSupabaseClient() {
   if (!supabase) {
     const SUPABASE_URL = process.env.SUPABASE_URL;
+    console.log(SUPABASE_URL);
     const SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    console.log(SUPABASE_ANON_KEY);
 
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       throw new Error('SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be set in environment variables');
